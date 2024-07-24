@@ -5,6 +5,22 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.post {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+.reply-container {
+    margin-left: 20px;
+    display: none;
+}
+.reply-toggle {
+    cursor: pointer;
+    color:#4CAF50;
+    text-decoration: underline;
 }
 
 /* Header Styling */
@@ -38,10 +54,20 @@ label {
     margin: 10px 0 5px;
 }
 
-textarea {
+textarea, input[type="file"], input[type="text"] {
     width: 100%;
     height: 100px;
     resize: none;
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-sizing: border-box;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+input[type="file"], input[type="text"] {
+    height: auto;
 }
 
 input[type="file"] {
@@ -54,6 +80,7 @@ button {
     color: white;
     border: none;
     cursor: pointer;
+    transition: background-color 0.3s;
 }
 
 button:hover {
@@ -73,11 +100,12 @@ button:hover {
     width: 500px;
     overflow: hidden;
 }
+
 @media (max-width: 600px) {
     .post {
         width: 300px;
     }
-    form{
+    form {
         width: 300px;
     }
 }
@@ -85,8 +113,11 @@ button:hover {
 .post img {
     max-width: 50%;
     height: auto;
+    transition: width 0.3s ease; /* Smooth transition for width change */
+    cursor: pointer; /* Pointer cursor to indicate it's clickable */
 }
-footer{
+
+footer {
     margin-top: 100px;
     padding: 10px;
     text-align: center;
@@ -96,31 +127,54 @@ footer{
     width: 100%;
     box-sizing: border-box;
 }
-.ooroi{
-    color: #4CAF50;
-    margin: 0 10px;
-}
 
-.ooroi:hover{
-    color: #fff;
-    background-color: #4CAF50;
-}
+
 
 footer a {
     color: #4CAF50;
     text-decoration: none;
     margin: 0 10px;
 }
+
 footer a:hover {
     text-decoration: underline;
 }
 
-img.toggle-size {
-    transition: width 0.3s ease; /* Smooth transition */
-    width: 60%; /* Initial width */
-    cursor: pointer; /* Pointer cursor to indicate it's clickable */
-}
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #121212;
+        color: #ffffff;
+    }
 
-img.toggle-size.expanded {
-    width: 100%; /* Expanded width */
+
+    a, .ooroi {
+        color: #32CD32; /* Lime green color */
+    }
+
+
+
+    label {
+        color: #ffffff;
+    }
+
+    textarea, input[type="file"], input[type="text"] {
+        background-color: #333;
+        color: #ffffff;
+        border: 1px solid #555;
+    }
+
+    .post {
+        border: 1px solid #333;
+        background-color: #1f1f1f;
+    }
+
+    .reply-toggle {
+        color: #32CD32;
+    }
+
+    footer {
+        background-color: #1f1f1f;
+        color: #ffffff;
+    }
 }
