@@ -1,7 +1,9 @@
-<img src="https://github.com/user-attachments/assets/6ede6eb9-cbd7-4e92-b656-2ddac445a195" width=65px height=65px> 
+<img src="https://github.com/xyresh/frappechan/blob/main/static/img/frappelogo.png" width=65px height=65px> 
 
 # Frappechan 
  The kafeneio of chans
+
+ 
 
  Frappechan is a imageboard webapp built exclusively with C, and SQLite.
  The goal of this project was to have an extremely memory efficient backend, and frontend by minimizing javascript to just a few lines.
