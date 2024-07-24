@@ -30,7 +30,7 @@ h1 {
 form {
     display: flex;
     flex-direction: column;
-    width: 300px;
+    width: 500px;
     margin-bottom: 20px;
 }
 
@@ -71,14 +71,56 @@ button:hover {
     padding: 10px;
     margin: 10px;
     width: 500px;
+    overflow: hidden;
 }
 @media (max-width: 600px) {
     .post {
         width: 300px;
     }
+    form{
+        width: 300px;
+    }
 }
 
 .post img {
-    max-width: 100%;
+    max-width: 50%;
     height: auto;
+}
+footer{
+    margin-top: 100px;
+    padding: 10px;
+    text-align: center;
+    border-top: 1px solid #ddd;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+.ooroi{
+    color: #4CAF50;
+    margin: 0 10px;
+}
+
+.ooroi:hover{
+    color: #fff;
+    background-color: #4CAF50;
+}
+
+footer a {
+    color: #4CAF50;
+    text-decoration: none;
+    margin: 0 10px;
+}
+footer a:hover {
+    text-decoration: underline;
+}
+
+img.toggle-size {
+    transition: width 0.3s ease; /* Smooth transition */
+    width: 60%; /* Initial width */
+    cursor: pointer; /* Pointer cursor to indicate it's clickable */
+}
+
+img.toggle-size.expanded {
+    width: 100%; /* Expanded width */
 }

@@ -20,13 +20,11 @@
 struct connection_info_struct {
     char *content;
     size_t content_size;
-    char *filename;
     FILE *file;
+    char *filename; // Remove const qualifier
     struct MHD_PostProcessor *pp;
+    char *reply_to;
 };
-
-
-
 
 static enum MHD_Result iterate_post(void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
                                     const char *filename, const char *content_type,
@@ -40,9 +38,8 @@ static enum MHD_Result iterate_post(void *coninfo_cls, enum MHD_ValueKind kind, 
                 if (!con_info->filename) {
                     fprintf(stderr, "Failed to allocate memory for filename\n");
                     return MHD_NO;
-                }           
+                }
                 char filepath[256];
-                //define your image filepath
                 snprintf(filepath, sizeof(filepath), "static/uploads/%s", filename);
                 con_info->file = fopen(filepath, "wb");
                 if (!con_info->file) {
@@ -65,32 +62,39 @@ static enum MHD_Result iterate_post(void *coninfo_cls, enum MHD_ValueKind kind, 
         memcpy(con_info->content + con_info->content_size, data, size);
         con_info->content_size += size;
         con_info->content[con_info->content_size] = '\0';
+    } else if (0 == strcmp(key, "reply_to")) {
+        if (size > 0) {
+            con_info->reply_to = realloc(con_info->reply_to, size + 1);
+            if (!con_info->reply_to) {
+                fprintf(stderr, "Failed to allocate memory for reply_to\n");
+                return MHD_NO;
+            }
+            memcpy(con_info->reply_to, data, size);
+            con_info->reply_to[size] = '\0';
+        }
     }
     return MHD_YES;
 }
+
+
 
 void request_completed(void *cls, struct MHD_Connection *connection,
                        void **con_cls, enum MHD_RequestTerminationCode toe) {
     struct connection_info_struct *con_info = *con_cls;
 
-    if (con_info == NULL)
+    if (NULL == con_info)
         return;
 
-    if (con_info->file) {
-        fclose(con_info->file);
-        con_info->file = NULL;
-    }
-    free(con_info->content);
-    con_info->content = NULL;
-    free(con_info->filename);
-    con_info->filename = NULL;
-    if (con_info->pp) {
+    if (con_info->content)
+        free(con_info->content);
+    if (con_info->filename) // Ensure filename is not NULL before freeing
+        free(con_info->filename);
+    if (con_info->pp)
         MHD_destroy_post_processor(con_info->pp);
-        con_info->pp = NULL;
-    }
+
     free(con_info);
-    *con_cls = NULL;  // Avoid dangling pointers
-}       
+}
+
   
 
 static enum MHD_Result send_page(struct MHD_Connection *connection, const char *page, int status_code) {
@@ -107,6 +111,51 @@ static enum MHD_Result redirect_to_index(struct MHD_Connection *connection) {
     MHD_destroy_response(response);
     return ret;
 }   
+
+static enum MHD_Result serve_post_thread(struct MHD_Connection *connection, const char *post_id) {
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_open("imageboard.db", &db);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
+        return MHD_NO;
+    }
+
+    const char *sql = "SELECT PostID, Content, ImagePath, Timestamp FROM Posts WHERE ReplyTo = ?";
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to fetch replies: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return MHD_NO;
+    }
+
+    sqlite3_bind_text(stmt, 1, post_id, -1, SQLITE_STATIC);
+
+    cJSON *json = cJSON_CreateArray();
+
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+        cJSON *reply = cJSON_CreateObject();
+        cJSON_AddStringToObject(reply, "id", (const char *)sqlite3_column_text(stmt, 0));
+        cJSON_AddStringToObject(reply, "content", (const char *)sqlite3_column_text(stmt, 1));
+        cJSON_AddStringToObject(reply, "imagePath", (const char *)sqlite3_column_text(stmt, 2));
+        cJSON_AddStringToObject(reply, "timestamp", (const char *)sqlite3_column_text(stmt, 3));
+        cJSON_AddItemToArray(json, reply);
+    }
+
+    char *json_str = cJSON_Print(json);
+    cJSON_Delete(json);
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+
+    struct MHD_Response *response = MHD_create_response_from_buffer(strlen(json_str), (void *)json_str, MHD_RESPMEM_MUST_FREE);
+    MHD_add_response_header(response, "Content-Type", "application/json");
+    int ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+    MHD_destroy_response(response);
+    return ret;
+}
+
 
 static enum MHD_Result serve_static_file(struct MHD_Connection *connection, const char *url) {
     char filepath[512];
@@ -132,11 +181,11 @@ static enum MHD_Result serve_static_file(struct MHD_Connection *connection, cons
         return MHD_NO;
     }
 }
-
+    
 enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connection,
                                      const char *url, const char *method,
                                      const char *version, const char *upload_data,
-                                     size_t *upload_data_size, void **con_cls) {    
+                                     size_t *upload_data_size, void **con_cls) {
     if (NULL == *con_cls) {
         struct connection_info_struct *con_info;
         con_info = malloc(sizeof(struct connection_info_struct));
@@ -148,6 +197,7 @@ enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connectio
         con_info->file = NULL;
         con_info->filename = NULL;
         con_info->pp = NULL;
+        con_info->reply_to = NULL;
         *con_cls = con_info;
 
         if (0 == strcmp(method, "POST")) {
@@ -156,35 +206,45 @@ enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connectio
                 fprintf(stderr, "Failed to create post processor\n");
                 free(con_info);
                 return MHD_NO;
-            }       
+            }
             return MHD_YES;
         }
     }
 
-        if (0 == strcmp(method, "POST")) {
-            struct connection_info_struct *con_info = *con_cls;
+    if (0 == strcmp(method, "POST")){
+        struct connection_info_struct *con_info = *con_cls;
 
-            if (*upload_data_size != 0) {
-                MHD_post_process(con_info->pp, upload_data, *upload_data_size);
-                *upload_data_size = 0;
-                return MHD_YES;
+        if (*upload_data_size != 0) {
+            MHD_post_process(con_info->pp, upload_data, *upload_data_size);
+            *upload_data_size = 0;
+            return MHD_YES;
+        } else {
+            if (con_info->file) {
+                fclose(con_info->file);
+                con_info->file = NULL;
+            }
+
+            // Ensure content, filename, and reply_to are not NULL before calling store_post
+            if (con_info->content && con_info->filename) {
+                if (store_post(con_info->content, con_info->filename, con_info->reply_to) != 0) {
+                    return send_page(connection, "<html><body>Failed to store post!</body></html>", MHD_HTTP_INTERNAL_SERVER_ERROR);
+                }
+
+                // Print all posts to the console after a new post is stored
+                print_all_posts();
             } else {
-                if (con_info->file) {
-                    fclose(con_info->file);
-                    con_info->file = NULL; // Ensure file is set to NULL after closing
-                }
+                fprintf(stderr, "Error: Missing content, filename, or reply_to in connection info.\n");
+            }  
 
-                // Ensure content and filename are not NULL before calling store_post
-                if (con_info->content && con_info->filename) {
-                    if (store_post(con_info->content, con_info->filename) != 0) {
-                        return send_page(connection, "<html><body>Failed to store post!</body></html>", MHD_HTTP_INTERNAL_SERVER_ERROR);
-                    }
-                }
+            // Clean up
+            //free(con_info->filename);
+            //free(con_info->content);
+            //free(con_info->reply_to);
+            //free(con_info);
 
-                //return send_page(connection, "<html><body>File uploaded successfully!</body></html>", MHD_HTTP_OK);
-                return redirect_to_index(connection);                   
-            }                   
+            return redirect_to_index(connection);
         }
+    }
 
 
     if (0 == strcmp(method, "GET") && strcmp(url, "/posts") == 0) {
@@ -198,7 +258,7 @@ enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connectio
             return MHD_NO;
         }
 
-        const char *sql = "SELECT PostID, Content, ImagePath, Timestamp FROM Posts";
+        const char *sql = "SELECT PostID, Content, ImagePath, Timestamp, ReplyTo FROM Posts";
         rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
 
         if (rc != SQLITE_OK) {
@@ -215,6 +275,7 @@ enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connectio
             cJSON_AddStringToObject(post, "content", (const char *)sqlite3_column_text(stmt, 1));
             cJSON_AddStringToObject(post, "imagePath", (const char *)sqlite3_column_text(stmt, 2));
             cJSON_AddStringToObject(post, "timestamp", (const char *)sqlite3_column_text(stmt, 3));
+            cJSON_AddStringToObject(post, "replyTo", (const char *)sqlite3_column_text(stmt, 4));
             cJSON_AddItemToArray(json, post);
         }
 
@@ -230,7 +291,6 @@ enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connectio
         return ret;
     }
 
-    //the index.html filepath
     if (0 == strcmp(method, "GET") && (strcmp(url, "/") == 0 || strcmp(url, "/index.html") == 0)) {
         return serve_static_file(connection, "/index.html");
     }
@@ -241,6 +301,10 @@ enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connectio
 
     return send_page(connection, "<html><body>Not found.</body></html>", MHD_HTTP_NOT_FOUND);
 }
+
+
+
+
             
 int main() {
     mkdir("uploads", 0777);  // Create the uploads directory if it doesn't exist

@@ -13,6 +13,41 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <time.h>
+#include <ctype.h>
+
+void print_all_posts() {
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_open("imageboard.db", &db);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
+        return;
+    }
+
+    const char *sql = "SELECT PostID, Content, ImagePath, Timestamp, ReplyTo FROM Posts";
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return;
+    }
+
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+        printf("PostID: %s\n", sqlite3_column_text(stmt, 0));
+        printf("Content: %s\n", sqlite3_column_text(stmt, 1));
+        printf("ImagePath: %s\n", sqlite3_column_text(stmt, 2));
+        printf("Timestamp: %s\n", sqlite3_column_text(stmt, 3));
+        const unsigned char *reply_to = sqlite3_column_text(stmt, 4);
+        printf("ReplyTo: %s\n", reply_to ? (const char *)reply_to : "NULL");
+        printf("\n");
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+}
+
 
 //compute MD5 hash
 void compute_md5(const char *str, char output[13]) {
@@ -46,7 +81,7 @@ void compute_md5(const char *str, char output[13]) {
 
     EVP_MD_CTX_free(mdctx);
 
-    for (int i = 0; i < 6; i++) {  // Only use the first 12 hex digits (6 bytes)
+    for (int i = 0; i < 6; i++) {
         sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
     }
     output[12] = '\0'; // Null-terminate the string
@@ -63,12 +98,12 @@ int initialize_database() {
         return 1;
     }
 
-    // Update schema to include the Timestamp column
     char *sql = "CREATE TABLE IF NOT EXISTS Posts("
                 "PostID TEXT PRIMARY KEY, "
                 "Content TEXT, "
                 "ImagePath TEXT, "
-                "Timestamp TEXT);";
+                "Timestamp TEXT, "
+                "ReplyTo TEXT);";  // Add ReplyTo column
     rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
 
     if (rc != SQLITE_OK) {
@@ -82,47 +117,49 @@ int initialize_database() {
     return 0;
 }
 
-int store_post(const char *content, const char *image_path) {
-    sqlite3 *db;
-    char *err_msg = 0;
-    int rc;
 
-    // Open the database
-    rc = sqlite3_open("imageboard.db", &db);
+int store_post(const char *content, const char *image_path, const char *reply_to) {
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_open("imageboard.db", &db);
+
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
         return 1;
     }
 
-    // Compute current timestamp
+    const char *final_image_path = image_path && strlen(image_path) > 0 ? image_path : "static/img/                         frappelogo.png";
+
+    char id[13];
+    compute_md5(content, id); // Generate the post ID
+
+    // Get current timestamp
     time_t now = time(NULL);
     char timestamp[20];
     strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", localtime(&now));
 
-    // Generate a unique ID for the post
-    char id[13];  // 12 characters for MD5 hash + 1 null terminator
-    compute_md5(content, id);
-
-    // Prepare SQL statement to insert the post
-    char *sql = sqlite3_mprintf(
-        "INSERT INTO Posts(PostID, Content, ImagePath, Timestamp) VALUES(%Q, %Q, %Q, %Q);",
-        id, content, image_path, timestamp
-    );
-
-    // Execute SQL statement
-    rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
-    sqlite3_free(sql);
+    const char *sql = "INSERT INTO Posts (PostID, Content, ImagePath, Timestamp, ReplyTo) VALUES (?, ?, ?, ?, ?)";
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
 
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", err_msg);
-        sqlite3_free(err_msg);
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
         return 1;
     }
 
-    // Close the database
+    sqlite3_bind_text(stmt, 1, id, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, content, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, image_path, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 4, timestamp, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 5, reply_to && strlen(reply_to) > 0 ? reply_to : NULL, -1, SQLITE_STATIC);
+
+    rc = sqlite3_step(stmt);
+
+    if (rc != SQLITE_DONE) {
+        fprintf(stderr, "Failed to insert data: %s\n", sqlite3_errmsg(db));
+    }
+
+    sqlite3_finalize(stmt);
     sqlite3_close(db);
-    return 0;
+    return rc == SQLITE_DONE ? 0 : 1;
 }
-    
