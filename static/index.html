@@ -1,0 +1,46 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>FrappeChan</title>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+        <header>
+            <img src="img/frappelogo.png" alt="FrappeChan Logo" class="logo">
+            <h1>FrappeChan</h1>
+        </header>
+
+        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+            <label for="content">Περιεχόμενο:</label>
+            <textarea id="content" name="content" required></textarea><br>
+            <label for="image">Εικόνα:</label>
+            <input type="file" id="image" name="image" accept="image/*" required><br>
+            <button type="submit">Δημοσίευση</button>
+        </form>     
+        <div id="posts">
+            <!-- Posts will be dynamically loaded here -->
+        </div>
+
+        <script>
+            async function fetchPosts() {
+                const response = await fetch('/posts');
+                const posts = await response.json();
+                const postsContainer = document.getElementById('posts');
+                postsContainer.innerHTML = '';
+                posts.forEach(post => {
+                    const postElement = document.createElement('div');
+                    postElement.className = 'post';
+                    postElement.innerHTML = `
+                        <p>${post.content}</p>
+                        <img src="../uploads/${post.imagePath}" alt="Image">
+                    `;
+                    postsContainer.appendChild(postElement);
+                });
+            }
+
+            window.onload = fetchPosts;
+        </script>
+    </body>
+    </html> 
