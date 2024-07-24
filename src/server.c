@@ -25,6 +25,9 @@ struct connection_info_struct {
     struct MHD_PostProcessor *pp;
 };
 
+
+
+
 static enum MHD_Result iterate_post(void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
                                     const char *filename, const char *content_type,
                                     const char *transfer_encoding, const char *data, uint64_t off, size_t size) {
@@ -195,7 +198,7 @@ enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connectio
             return MHD_NO;
         }
 
-        const char *sql = "SELECT Content, ImagePath FROM Posts";
+        const char *sql = "SELECT PostID, Content, ImagePath, Timestamp FROM Posts";
         rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
 
         if (rc != SQLITE_OK) {
@@ -208,8 +211,10 @@ enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connectio
 
         while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
             cJSON *post = cJSON_CreateObject();
-            cJSON_AddStringToObject(post, "content", (const char *)sqlite3_column_text(stmt, 0));
-            cJSON_AddStringToObject(post, "imagePath", (const char *)sqlite3_column_text(stmt, 1));
+            cJSON_AddStringToObject(post, "id", (const char *)sqlite3_column_text(stmt, 0));
+            cJSON_AddStringToObject(post, "content", (const char *)sqlite3_column_text(stmt, 1));
+            cJSON_AddStringToObject(post, "imagePath", (const char *)sqlite3_column_text(stmt, 2));
+            cJSON_AddStringToObject(post, "timestamp", (const char *)sqlite3_column_text(stmt, 3));
             cJSON_AddItemToArray(json, post);
         }
 
@@ -224,6 +229,7 @@ enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connectio
         MHD_destroy_response(response);
         return ret;
     }
+
     //the index.html filepath
     if (0 == strcmp(method, "GET") && (strcmp(url, "/") == 0 || strcmp(url, "/index.html") == 0)) {
         return serve_static_file(connection, "/index.html");

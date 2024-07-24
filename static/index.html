@@ -33,13 +33,14 @@
                     const postElement = document.createElement('div');
                     postElement.className = 'post';
                     postElement.innerHTML = `
-                        <p>${post.content}</p>
+                        <p>αρ. δημ.: ${post.id} | ${post.timestamp}</p>
                         <img src="../uploads/${post.imagePath}" alt="Image">
+                        <p>${post.content}</p>
                     `;
                     postsContainer.appendChild(postElement);
                 });
             }
-
+        
             window.onload = fetchPosts;
         </script>
     </body>
