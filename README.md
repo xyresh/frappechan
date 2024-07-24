@@ -8,7 +8,7 @@
 
  you can compile and run Frappechan as such:  
  
- 1.install dependencies: `libmicrohttpd-dev libsqlite3-dev libcjson-dev`  
+ 1.install dependencies: `libmicrohttpd-dev libsqlite3-dev libcjson-dev libssl-dev`  
  
  2.run `make`  
  
