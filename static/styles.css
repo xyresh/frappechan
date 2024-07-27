@@ -14,8 +14,12 @@ body {
     margin-bottom: 10px;
 }
 .reply-container {
-    margin-left: 20px;
+    margin-left: 10px;
     display: none;
+    max-width: 100%; /* Ensure reply container does not exceed parent width */
+    overflow: hidden;
+    overflow-wrap: break-word;
+    word-wrap: break-word; /* Break words to prevent overflow */
 }
 .reply-toggle {
     cursor: pointer;
@@ -99,7 +103,14 @@ button:hover {
     margin: 10px;
     width: 500px;
     overflow: hidden;
+    overflow-wrap: break-word;
+    word-wrap: break-word; /* Break words to prevent overflow */
 }
+p{
+    word-wrap: break-word; /* Break words to prevent overflow */
+    overflow-wrap: break-word;
+}
+
 
 @media (max-width: 600px) {
     .post {
