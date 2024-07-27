@@ -15,7 +15,7 @@
 #include "database.h"
 #include <cJSON.h>
 
-#define PORT 9600
+#define PORT 80
 
 struct connection_info_struct {
     char *content;
