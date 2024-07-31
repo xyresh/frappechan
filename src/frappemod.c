@@ -4,6 +4,7 @@
 #include <ncurses.h>
 #include <sqlite3.h>
 #include <time.h>
+#include <locale.h>
 
 #define MAX_POSTS 100
 #define MAX_CONTENT_LENGTH 256
@@ -228,6 +229,12 @@ void handle_input(WINDOW *win, sqlite3 *db) {
 }
 
 int main() {
+    setlocale(LC_CTYPE, ""); // Ensure UTF-8 locale
+    initscr();               // Initialize ncurses
+    keypad(stdscr, TRUE);    // Enable special keys handling
+    noecho();                // Disable echoing of input
+    cbreak();                // Disable line buffering          
+    
     sqlite3 *db;
     int rc = sqlite3_open("imageboard.db", &db);
     if (rc != SQLITE_OK) {
