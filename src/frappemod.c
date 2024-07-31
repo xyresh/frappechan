@@ -130,19 +130,19 @@ void display_posts(WINDOW *win) {
 
 void display_title() {
     move(0, 0);
-    attron(A_REVERSE);  // Invert colors for command line
+    attron(A_REVERSE);  
     clrtoeol();
     printw("    FrappeMod V0.1");
-    attroff(A_REVERSE);  // Turn off inverted colors
+    attroff(A_REVERSE);
     refresh();
 }
 
 void display_command_line() {
     move(LINES - 2, 0);
-    attron(A_REVERSE);  // Invert colors for command line
+    attron(A_REVERSE); 
     clrtoeol();
     printw("[a] Archive [d] Delete [q] Quit [r] Refresh ");
-    attroff(A_REVERSE);  // Turn off inverted colors
+    attroff(A_REVERSE);
     refresh();
 }
 
@@ -218,8 +218,8 @@ void handle_input(WINDOW *win, sqlite3 *db) {
             case 'r': {
                 // Refresh posts
                 fetch_posts(db);
-                selected_index = 0; // Reset index after refresh
-                start_index = 0;   // Reset scroll
+                selected_index = 0;
+                start_index = 0;
                 break;
             }
         }
@@ -252,7 +252,7 @@ int main() {
     cbreak();
 
     // Create a window for posts
-    WINDOW *win = newwin(LINES - 3, DISPLAY_WIDTH, 1    , 0);  // Adjust height to fit command line
+    WINDOW *win = newwin(LINES - 3, DISPLAY_WIDTH, 1    , 0);  
     if (win == NULL) {
         endwin();
         sqlite3_close(db);
