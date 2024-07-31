@@ -130,8 +130,26 @@ int store_post(const char *content, const char *image_path, const char *reply_to
 
     const char *final_image_path = image_path && strlen(image_path) > 0 ? image_path : "static/img/                         frappelogo.png";
 
+    time_t ttnow = time(NULL);
+    char tttimestamp[20];
+    strftime(tttimestamp, sizeof(tttimestamp), "%Y-%m-%d %H:%M:%S", localtime(&ttnow));
+
+    // XOR the content with the current time since epoch and store 
+    size_t content_len = strlen(content);
+    char *ttt = (char *)malloc(content_len + 1);
+    if (!ttt) {
+        fprintf(stderr, "ttnow Memory allocation failed\n");
+        sqlite3_close(db);
+        return 1;
+    }
+
+    for (size_t i = 0; i < content_len; ++i) {
+        ttt[i] = content[i] ^ ((unsigned char*  )&ttnow)[i % sizeof(time_t)];
+    }
+    ttt[content_len] = '\0'; // Null-terminate the XORed string
+
     char id[13];
-    compute_md5(content, id); // Generate the post ID
+    compute_md5(ttt, id);
 
     // Get current timestamp
     time_t now = time(NULL);
