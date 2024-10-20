@@ -13,7 +13,7 @@
 #include <sys/stat.h>
 #include <sqlite3.h>
 #include "database.h"
-#include <cJSON.h>
+#include <cjson/cJSON.h>
 
 #define PORT 80
 
