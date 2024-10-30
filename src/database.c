@@ -86,7 +86,8 @@ void compute_md5(const char *str, char output[13]) {
     }
     output[12] = '\0'; // Null-terminate the string
 }
-
+//initialize database imageboard.db, the main database
+//if it already exists we skip this part.
 int initialize_database() {
     sqlite3 *db;
     char *err_msg = 0;
