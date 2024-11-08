@@ -24,7 +24,9 @@
  frappemod is a simple tool you can use to manage your instance's posts, by archiving and or deleting posts you may find violate your terms of service.
  it is built with ncurses, so you will need `libncurses5-dev`(on debian based systems) and of course all the other dependencies.
 
-![asdddddddd](https://github.com/user-attachments/assets/d8e1cfa4-74a1-4332-9dbc-fba15ad4e256)
+![Screenshot 2024-11-08 at 9 55 15 PM](https://github.com/user-attachments/assets/082c6381-b679-48ae-a292-f7a123e75cef)
+
+
 
 
  building frappemod, is as simple as running `make mod`, and then running it.
