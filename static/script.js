@@ -108,3 +108,21 @@ function changePage(page) {
 }
 
 window.onload = fetchPosts;
+
+    // Array of image URLs
+    const images = [
+        'img/rand/1.jpg',
+        'img/rand/2.jpeg',
+        'img/rand/3.jpeg',
+        'img/rand/4.jpg',
+        // Add more image URLs as needed
+    ];
+
+    // Function to select a random image
+    function getRandomImage() {
+        const randomIndex = Math.floor(Math.random() * images.length);
+        return images[randomIndex];
+    }
+
+    // Set the image source on page load
+    document.getElementById('randomImage').src = getRandomImage();

@@ -28,10 +28,26 @@ body {
 
 /* Header Styling */
 header {
+    margin-bottom: 20px; /* Space below the header */
+    display: flex;                /* Use flexbox for header */
+    flex-direction: column;       /* Stack elements vertically */
+    align-items: center;          /* Center all items horizontally */
+    text-align: center;
+}
+
+.frappedaki{
     display: flex;
     align-items: center;
     gap: 10px; /* Adjust space between the logo and the heading */
-    margin-bottom: 20px; /* Space below the header */
+
+}
+
+#randomImage {
+    width: 190px;                 /* Set the width of the image */
+    height: 110px;                /* Set the height of the image */
+    object-fit: cover;            /* Crop the image to fit without stretching */
+    margin-top: 10px;             /* Space above the random image, adjust as needed */
+    border-radius: 3px;
 }
 
 /* Logo Styling */
