@@ -42,4 +42,9 @@
 
  building frappemod, is as simple as running `make mod`, and then running it.
 
+## Running on other systems
+  I have tested frappechan on debian GNU/Linux, it should run on linux distributions which have gcc.
+  I have also been able to run in on macOS natively, and it also seems to work on openBSD.
+  you should check the library equivalents for your system as i have provided the debian names of these packages.
+
  to use it, you may use <kbd>↑</kbd>, <kbd>↓</kbd>, then  <kbd>a</kbd> archive <kbd>d</kbd> delete and <kbd>r</kbd> to fetch the current posts.
