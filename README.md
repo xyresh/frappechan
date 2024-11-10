@@ -18,6 +18,17 @@
 
  4.If you want to moderate your server(to archive/delete posts) you can run `./bin/frappemod`
 
+ 5.You can run it as a systemd service, copy(and modify if necessary) the `frappe.service` file into the `/etc/systemd/system/` directory
+ then simply `systemctl enable frappe` as root. I might change the directories to be fully unix compliant in the future, but as of now i find it is easier if it's in the home directory.
+
+ If it fails to start MHD daemon, the problem may be one of the following:
+
+ 1.Something else is running on port 80 already (appache webserver or nginx) make sure these aren't running or change frappechans port in server.c
+
+ 2.insufficient privileges, either run as root, or run `setcap 'cap_net_bind_service=+ep' /bin/frappe` within the frappechan directory as root.
+
+ 3. it's not a bad idea to run `ufw allow 80` as root
+
  you can change any configurations you want within the `server.c` file, along with the frontend with your `index.html` file
 
 ## frappemod
