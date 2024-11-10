@@ -27,7 +27,7 @@
 
  2.insufficient privileges, either run as root, or run `setcap 'cap_net_bind_service=+ep' /bin/frappe` within the frappechan directory as root.
 
- 3. it's not a bad idea to run `ufw allow 80` as root
+ It's also not a bad idea to run `ufw allow 80` as root
 
  you can change any configurations you want within the `server.c` file, along with the frontend with your `index.html` file
 
