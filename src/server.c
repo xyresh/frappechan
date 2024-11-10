@@ -10,12 +10,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <sqlite3.h>
 #include "database.h"
 #include <cjson/cJSON.h>
 
 #define PORT 80
+
+struct MHD_Daemon *http_daemon;
 
 struct connection_info_struct {
     char *content;
@@ -95,7 +98,7 @@ void request_completed(void *cls, struct MHD_Connection *connection,
     free(con_info);
 }
 
-  
+
 
 static enum MHD_Result send_page(struct MHD_Connection *connection, const char *page, int status_code) {
     struct MHD_Response *response = MHD_create_response_from_buffer(strlen(page), (void *)page, MHD_RESPMEM_PERSISTENT);
@@ -110,7 +113,7 @@ static enum MHD_Result redirect_to_index(struct MHD_Connection *connection) {
     int ret = MHD_queue_response(connection, MHD_HTTP_FOUND, response); // HTTP 302 Found
     MHD_destroy_response(response);
     return ret;
-}   
+}
 
 static enum MHD_Result serve_post_thread(struct MHD_Connection *connection, const char *post_id) {
     sqlite3 *db;
@@ -181,7 +184,7 @@ static enum MHD_Result serve_static_file(struct MHD_Connection *connection, cons
         return MHD_NO;
     }
 }
-    
+
 enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connection,
                                      const char *url, const char *method,
                                      const char *version, const char *upload_data,
@@ -234,7 +237,7 @@ enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connectio
                 print_all_posts();
             } else {
                 fprintf(stderr, "Error: Missing content, filename, or reply_to in connection info.\n");
-            }  
+            }
 
             // Clean up
             //free(con_info->filename);
@@ -304,27 +307,36 @@ enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *connectio
 
 
 
+void handle_shutdown(int signum) {
+    if (daemon != NULL) {
+        MHD_stop_daemon(daemon);
+    }
+}
 
-            
+
 int main() {
-    mkdir("uploads", 0777);  // Create the uploads directory if it doesn't exist
+    mkdir("uploads", 0777);
 
     if (initialize_database() != 0) {
         fprintf(stderr, "Failed to initialize database\n");
         return 1;
     }
 
-    struct MHD_Daemon *daemon;
+    // Setup signal handling for SIGTERM and SIGINT
+    signal(SIGTERM, handle_shutdown);
+    signal(SIGINT, handle_shutdown);
 
-    daemon = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, PORT, NULL, NULL,
-                              &answer_to_connection, NULL, MHD_OPTION_NOTIFY_COMPLETED, request_completed, NULL, MHD_OPTION_END);
-    if (NULL == daemon) {
+    // Start the MHD daemon
+    http_daemon = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, PORT, NULL, NULL,
+                                   &answer_to_connection, NULL, MHD_OPTION_NOTIFY_COMPLETED, request_completed, NULL, MHD_OPTION_END);
+    if (NULL == http_daemon) {
         fprintf(stderr, "Failed to start MHD daemon\n");
         return 1;
     }
 
     printf("Server is running on http://localhost:%d\n", PORT);
-    getchar(); // Wait for user input to stop the server
-    MHD_stop_daemon(daemon);
+    pause();  // wait for signal (SIGTERM or SIGINT)
+
+    MHD_stop_daemon(http_daemon);
     return 0;
 }

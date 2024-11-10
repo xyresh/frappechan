@@ -1,0 +1,14 @@
+[Unit]
+Description=The frappechan server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory= ~/frappechan
+ExecStart= ~/frappechan/bin/frappe
+Restart=on-failure
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
