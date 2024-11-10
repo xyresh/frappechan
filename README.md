@@ -47,6 +47,6 @@
 
  ## Running on other systems
   I have tested frappechan on debian GNU/Linux, it should run on linux distributions which have gcc.
-  I have also been able to run in on macOS natively, and it also seems to work on openBSD.
+  I have also been able to run it on macOS natively, and it also seems to work on openBSD. Basically with little changes it runs on most *nix systems.
   you should check the library equivalents for your system as i have provided the debian names of these packages.
 
