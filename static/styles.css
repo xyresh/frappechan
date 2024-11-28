@@ -10,15 +10,24 @@ body {
 
 .post {
     border: 1px solid #ddd;
-    padding: 20px;
+    padding: 12px;
 }
 .reply-container {
-    margin-left: 10px;
-    display: none;
-    max-width: 100%; /* Ensure reply container does not exceed parent width */
-    overflow: hidden;
-    overflow-wrap: break-word;
-    word-wrap: break-word; /* Break words to prevent overflow */
+    display: block;  /* Change from 'none' initially so it's block when visible */
+    margin-top: 10px;
+    width: 70%;
+    padding-left: 2px;  /* Indent replies for better visibility */
+    padding-right: 2px;
+}
+
+/* Ensure replies (post content) wrap correctly */
+.reply-container .post-content {
+    white-space: pre-wrap;  /* Preserve whitespace and wrap text */
+    word-wrap: break-word;  /* Break long words */
+    word-break: break-word;  /* Prevent long words from overflowing */
+    margin-bottom: 10px;
+    max-width: 90%;  /* Ensure they don't exceed the container width */
+    padding-right: 4px;
 }
 .reply-toggle {
     cursor: pointer;
@@ -122,6 +131,8 @@ button:hover {
     overflow: hidden;
     overflow-wrap: break-word;
     word-wrap: break-word; /* Break words to prevent overflow */
+    display: flex; /*added*/
+    flex-direction: column; /*added*/
 }
 p{
     word-wrap: break-word; /* Break words to prevent overflow */
@@ -133,12 +144,17 @@ p{
     .post {
         width: 300px;
     }
+    .reply-container{
+        padding-left: 1px;
+        margin-right: 20px;
+    }
     form {
         width: 335px;
     }
 }
 
 .post img {
+    object-fit: contain;
     max-width: 50%;
     height: auto;
     transition: width 0.3s ease; /* Smooth transition for width change */

@@ -130,6 +130,19 @@ int store_post(const char *content, const char *image_path, const char *reply_to
     }
 
     const char *final_image_path = image_path && strlen(image_path) > 0 ? image_path : "static/img/                         frappelogo.png";
+    // Generate scaled image path
+    char scaled_image_path[256];
+    snprintf(scaled_image_path, sizeof(scaled_image_path), "static/img/scaled/%s", strrchr(final_image_path, '/') + 1);
+
+    // Generate the scaled image
+    char cmd[512];
+    snprintf(cmd, sizeof(cmd), "convert %s -resize 400x %s", final_image_path, scaled_image_path);
+    int ret = system(cmd);
+    if (ret != 0) {
+        fprintf(stderr, "Failed to generate scaled image for %s\n", final_image_path);
+        sqlite3_close(db);
+        return 1;
+    }
 
     time_t ttnow = time(NULL);
     char tttimestamp[20];
