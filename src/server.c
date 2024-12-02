@@ -43,7 +43,7 @@ static enum MHD_Result iterate_post(void *coninfo_cls, enum MHD_ValueKind kind, 
                     return MHD_NO;
                 }
                 char filepath[256];
-                snprintf(filepath, sizeof(filepath), "static/uploads/%s", filename);
+                snprintf(filepath, sizeof(filepath), "static/uploads/fullsize/%s", filename);
                 con_info->file = fopen(filepath, "wb");
                 if (!con_info->file) {
                     fprintf(stderr, "Failed to open file: %s\n", filepath);

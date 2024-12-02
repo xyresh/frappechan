@@ -6,9 +6,6 @@
     <title>FrappeChan</title>
     <link rel="icon" type="image/x-icon" href="img/frappelogo.png">
     <link rel="stylesheet" href="styles.css">
-    <style>
-
-    </style>
 </head>
 <body>
     <header>
@@ -17,12 +14,12 @@
             <h1>FrappeChan</h1>
         </div>
 
-    <p>« Το Καφενέιο των chans »</p>
-    <img id="randomImage" alt="" >
-
-       
+        <p>« Το Καφενέιο των chans »</p>
+        <img id="randomImage" alt="">
     </header>
+
     <a href="terms.html" class="ooroi">Όροι χρήσης</a>
+
     <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
         <label for="content">Περιεχόμενο Δημοσίευσης:</label>
         <textarea id="content" name="content" required></textarea><br>
@@ -36,17 +33,15 @@
     <div id="posts">
         <!-- Posts will be dynamically loaded here -->
     </div>
+
     <script src="script.js"></script>
 
     <h5>Σελίδες</h5>
     <div id="pagination" class="pagination">
-        
         <!-- Pagination controls will be dynamically generated here -->
     </div>
     
-    <br>
-    <br>
-    <br>
+    <br><br><br>
     <footer>
         <div class="warning">Το περιεχόμενο της σελίδας καθώς και η σχετική ευθύνη ανήκει στους χρήστες που το δημιουργούν.</div>
         <br>
@@ -54,8 +49,7 @@
         <br>
         <p>Το FrappeChan ειναι κατασκευή του:</p>
         <a href="https://github.com/xyresh">xyresh</a>
-        <br>
-        <br>
+        <br><br>
         <a href="#" class="back-to-top" onclick="scrollToTop()">επιστροφή</a>
         <br>
     </footer>

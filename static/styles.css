@@ -15,9 +15,10 @@ body {
 .reply-container {
     display: block;  /* Change from 'none' initially so it's block when visible */
     margin-top: 10px;
-    width: 70%;
+    width: 40%;
     padding-left: 2px;  /* Indent replies for better visibility */
     padding-right: 2px;
+    margin-right: 40%;
 }
 
 /* Ensure replies (post content) wrap correctly */
@@ -32,6 +33,23 @@ body {
 .reply-toggle {
     cursor: pointer;
     color:#4CAF50;
+    text-decoration: underline;
+}
+.admin-post {
+    color: #4CAF50; /* Green background */
+    text-decoration: underline; /* Underline the text */
+    padding: 5px; /* Optional: Adds some padding to make it look nicer */
+    padding-left: 0px;
+}
+
+
+.view-thread-button, .back-button {
+    color: #4CAF50;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.view-thread-button:hover, .back-button:hover {
     text-decoration: underline;
 }
 
@@ -116,6 +134,10 @@ button:hover {
     background-color: #45a049;
 }
 
+.greentext {
+    color: #4CAF50;
+}
+
 #posts {
     display: flex;
     flex-direction: column;
@@ -138,6 +160,9 @@ p{
     word-wrap: break-word; /* Break words to prevent overflow */
     overflow-wrap: break-word;
 }
+.youtube-embed{
+    margin-left: 5px;
+}
 
 
 @media (max-width: 600px) {
@@ -150,6 +175,9 @@ p{
     }
     form {
         width: 335px;
+    }
+    p{
+        max-width: 80%;
     }
 }
 
