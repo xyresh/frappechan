@@ -5,13 +5,14 @@
 #include <sqlite3.h>
 #include <time.h>
 #include <locale.h>
+#include <signal.h>
 
 #define MAX_POSTS 100
 #define MAX_CONTENT_LENGTH 256
-#define DISPLAY_WIDTH 80
 #define ID_WIDTH 12
 #define CONTENT_WIDTH (DISPLAY_WIDTH - ID_WIDTH - 20)  // Adjust based on ID_WIDTH and padding
-#define SCROLLABLE_HEIGHT 15   // Number of rows for post display area
+#define SCROLLABLE_HEIGHT (LINES - 3) // Adjust dynamically based on terminal height
+#define DISPLAY_WIDTH COLS
 
 typedef struct {
     char id[13];
@@ -23,6 +24,21 @@ static Post posts[MAX_POSTS];
 static int num_posts = 0;
 static int selected_index = 0;
 static int start_index = 0;  // Starting index for scrolling
+
+void handle_resize(int sig) {
+    // Reinitialize the screen size and adjust layout
+    endwin();            // End the current ncurses session
+    refresh();           // Refresh the screen
+    clear();             // Clear the screen
+    resize_term(LINES, DISPLAY_WIDTH);  // Adjust window size to new terminal size
+    // You can also add code to adjust any UI elements here, if needed
+    start_color();       // Restart colors if you're using them
+    // Call display functions to update window contents after resizing
+    display_title();
+    display_posts(stdscr); // Redraw the posts
+    display_command_line();
+    refresh();           // Ensure the screen is redrawn with the new size
+}
 
 int fetch_posts(sqlite3 *db) {
     sqlite3_stmt *stmt;
@@ -108,8 +124,16 @@ void display_posts(WINDOW *win) {
             wattron(win, A_REVERSE);
         }
 
+        // Truncate content to 70 characters and append "..." if it is longer
+        char truncated_content[MAX_CONTENT_LENGTH];
+        strncpy(truncated_content, posts[i + start_index].content, 70);
+        truncated_content[70] = '\0';  // Ensure the string is null-terminated
+        if (strlen(posts[i + start_index].content) > 70) {
+            strcat(truncated_content, "...");
+        }
+
         mvwprintw(win, i, 0, "ID: %-12s", posts[i + start_index].id);
-        mvwprintw(win, i, ID_WIDTH + 1, "  Content: %-*s", CONTENT_WIDTH, posts[i + start_index].content);
+        mvwprintw(win, i, ID_WIDTH + 1, "  Content: %-*s", CONTENT_WIDTH, truncated_content);
 
         // Move to the end of the line for timestamp
         mvwprintw(win, i, DISPLAY_WIDTH - 20, "%s", posts[i + start_index].timestamp);
@@ -127,6 +151,7 @@ void display_posts(WINDOW *win) {
     // Refresh the window to display changes
     wrefresh(win);
 }
+
 
 void display_title() {
     move(0, 0);
@@ -233,26 +258,26 @@ int main() {
     initscr();               // Initialize ncurses
     keypad(stdscr, TRUE);    // Enable special keys handling
     noecho();                // Disable echoing of input
-    cbreak();                // Disable line buffering          
+    cbreak();                // Disable line buffering
     
+    signal(SIGWINCH, handle_resize);  // Handle resizing when terminal is resized
+
+    // Initialize SQLite database
     sqlite3 *db;
     int rc = sqlite3_open("imageboard.db", &db);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
         return 1;
     }
+    
     // Initialize the archive database
     if (initialize_archive() != 0) {
         sqlite3_close(db);
         return 1;
-    }   
-    initscr();
-    keypad(stdscr, TRUE);
-    noecho();
-    cbreak();
+    }
 
     // Create a window for posts
-    WINDOW *win = newwin(LINES - 3, DISPLAY_WIDTH, 1    , 0);  
+    WINDOW *win = newwin(LINES - 3, DISPLAY_WIDTH, 1, 0);
     if (win == NULL) {
         endwin();
         sqlite3_close(db);
@@ -261,13 +286,18 @@ int main() {
     }
 
     if (fetch_posts(db) != 0) {
+        delwin(win);
         endwin();
         sqlite3_close(db);
         return 1;
     }
-    display_title(win); 
+
+    // Display UI components
+    display_title();
     display_posts(win);
     display_command_line();
+
+    // Handle user input
     handle_input(win, db);
 
     delwin(win);
