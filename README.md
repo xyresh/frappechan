@@ -10,7 +10,7 @@
 
  you can compile and run Frappechan along with frappemod as such:  
  
- 1.install dependencies: `libmicrohttpd-dev libsqlite3-dev libcjson-dev libssl-dev libncurses5-dev`  
+ 1.install dependencies: `libmicrohttpd-dev libsqlite3-dev libcjson-dev libssl-dev libncursesw5-dev`  
  
  2.run `make`  
  
